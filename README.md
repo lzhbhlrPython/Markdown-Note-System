@@ -37,9 +37,13 @@ Markdown Note System 是一个基于 Flask 框架构建的轻量级个人笔记�
     pip install -r requirements.txt
     ```
 
-4. 运行 Flask 应用：
+4. 运行 Flask 应用（默认端口8000）：
     ```sh
-    python app.py
+    python app.py port 5000
+    ```
+   或运行 GUI：
+    ```sh
+    python GUI.py
     ```
 
 
@@ -71,6 +75,7 @@ Markdown Note System 是一个基于 Flask 框架构建的轻量级个人笔记�
 ```plaintext
 markdown-note-system/
 ├── app.py                            # Flask 应用主文件
+├── GUI.py                            # GUI 主文件
 ├── requirements.txt                  # 依赖项文件
 ├── templates/                        # HTML 模板文件
 │   ├── base.html

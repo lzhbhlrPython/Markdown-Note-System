@@ -6,6 +6,8 @@ import markdown
 import shutil
 import tempfile
 import zipfile
+import webbrowser
+import sys
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, abort, redirect, url_for, send_file
 from dominate import document
@@ -475,4 +477,11 @@ def add_cors_headers(response):
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    if not os.path.exists(app.config['DATA_DIR']):
+        os.makedirs(app.config['DATA_DIR'])
+    if len(sys.argv) == 3 and sys.argv[1] == 'port':
+        webbrowser.open(f'http://localhost:{sys.argv[2]}')
+        app.run(host='0.0.0.0', port=int(sys.argv[2]))
+    else:
+        webbrowser.open('http://localhost:8000')
+        app.run(host='0.0.0.0', port=8000)
