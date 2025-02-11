@@ -14,6 +14,7 @@
     <a href="{{ url_for('download_note', project_id=project.id, note_id=note.id) }}" class="btn btn-primary">保存到本地</a>
     <button class="btn btn-primary" onclick="saveAsImage()">保存为图片</button>
     <button class="btn btn-primary" onclick="saveAsPDF()">保存为PDF</button>
+    <a href="{{ url_for('note_edit', project_id=project.id, note_id=note.id) }}" class="btn btn-primary">编辑</a>
   </div>
 </div>
 {% endblock %}

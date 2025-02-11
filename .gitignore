@@ -128,5 +128,5 @@ tmp/
 *.xccheckout/
 
 # NOTE
-static/
+static/uploads/
 data/

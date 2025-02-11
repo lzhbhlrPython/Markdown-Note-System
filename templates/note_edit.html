@@ -8,8 +8,9 @@
       <input type="text" id="noteTitle" value="{{ note.title }}" class="form-control form-control-lg mb-3">
       <div class="mb-3 d-flex gap-2">
         <button id="saveNote" class="btn btn-primary">保存</button>
-        <a href="{{ url_for('note_preview', project_id=project.id, note_id=note.id) }}" class="btn btn-success">预览</a>
+        <button id="previewNote" class="btn btn-success">阅读</a>
       </div>
+      <p class="text-muted">支持 Markdown 语法，拖拽或粘贴图片可自动上传</p>
       <textarea id="editor">{{ note.content }}</textarea>
       <div id="wordCount" class="mt-2 small text-muted">字符数：0</div>
       <div id="lastBackupTime" class="mt-2 small text-muted">上次自动备份时间：无</div>
@@ -24,7 +25,6 @@
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
 <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
   /* 额外自定义样式 */
 </style>
@@ -105,9 +105,6 @@
     if (response.ok) {
       showSwalMsg("保存成功");
       backupContent = content;
-      setTimeout(() => {
-        window.location.href = "{{ url_for('project_detail', project_id=project.id) }}";
-      }, 2000);
     }
   });
 
@@ -159,6 +156,25 @@
       });
     }
   });
+
+  //如果访问预览页面时还未保存，先保存再跳转
+  document.getElementById("previewNote").addEventListener("click",async function() {
+    //检查是否有内容变动
+    const title = document.getElementById("noteTitle").value;
+    const content = simplemde.value();
+    const response = await fetch("/api/projects/{{ project.id }}/notes/{{ note.id }}", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title, content: content })
+    });
+    if (response.ok) {
+      window.location.href = "{{ url_for('note_preview', project_id=project.id, note_id=note.id) }}";
+    }else{
+      showSwalMsg("保存失败");
+    }
+  });
+
+
   // 每隔 10 秒自动备份内容到 localStorage，并更新上次备份时间
   setInterval(() => {
     const content = simplemde.value();

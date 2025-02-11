@@ -32,8 +32,6 @@
 <!-- 引入 Fancybox 样式和脚本 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4/dist/fancybox.css" />
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4/dist/fancybox.umd.js"></script>
-<!-- 引入 SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   // 显示 SweetAlert2 提示（toast）
   function showSwalMsg(message, icon = 'success') {
@@ -91,23 +89,42 @@
 
   // 删除图片操作
   function deleteImage(imageId) {
-    if (!confirm("确定要删除该图片吗？")) return;
-    fetch(`/api/images/${imageId}`, { method: "DELETE" })
-      .then(response => response.json())
-      .then(data => {
-        if (data.message) {
-          showSwalMsg("图片已删除", 'success');
-          setTimeout(function(){
-            window.location.reload();
-          }, 1500);
-        } else {
-          showSwalMsg("删除失败：" + (data.error || "未知错误"), 'error');
-        }
-      })
-      .catch(err => {
-        showSwalMsg("删除失败", 'error');
-        console.error(err);
-      });
+    Swal.fire({
+      title: '确定要删除该图片吗？',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '删除',
+      cancelButtonText: '取消'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`/api/images/${imageId}`, { method: "DELETE" })
+          .then(response => response.json())
+          .then(data => {
+            if (data.message) {
+              Swal.fire({
+                text: '图片已删除',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+              }).then(() => window.location.reload());
+            } else {
+              Swal.fire({
+                text: '删除失败：' + (data.error || '未知错误'),
+                icon: 'error'
+              });
+            }
+          })
+          .catch(err => {
+            Swal.fire({
+              text: '删除失败',
+              icon: 'error'
+            });
+            console.error(err);
+          });
+      }
+    });
   }
 
   // 复制链接操作
