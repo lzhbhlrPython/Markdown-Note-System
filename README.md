@@ -1,6 +1,6 @@
 # Markdown Note System
 
-Markdown Note System 是一个基于 Flask 框架构建的轻量级笔记管理系统。系统主要采用 Markdown 作为笔记书写格式，实现对笔记的创建、编辑、预览、自动备份等功能，同时提供图片上传和管理功能。系统以文件系统和 JSON 文件为数据存储方式，不依赖传统数据库，追求简单、灵活和高效的设计理念。
+Markdown Note System 是一个基于 Flask 框架构建的轻量级个人笔记管理系统。系统主要采用 Markdown 作为笔记书写格式，实现对笔记的创建、编辑、预览、自动备份等功能，同时提供图片上传和管理功能。系统以文件系统和 JSON 文件为数据存储方式，不依赖传统数据库，追求简单、灵活和高效的设计理念。
 
 ## 功能特性
 
@@ -70,23 +70,25 @@ Markdown Note System 是一个基于 Flask 框架构建的轻量级笔记管理�
 
 ```plaintext
 markdown-note-system/
-├── app.py                  # Flask 应用主文件
-├── requirements.txt        # 依赖项文件
-├── templates/              # HTML 模板文件
+├── app.py                            # Flask 应用主文件
+├── requirements.txt                  # 依赖项文件
+├── templates/                        # HTML 模板文件
 │   ├── base.html
 │   ├── index.html
 │   ├── project_detail.html
 │   ├── note_edit.html
 │   ├── note_preview.html
 │   └── gallery.html
-├── static/                 # 静态文件目录
-│   └── uploads/            # 图片上传目录
-├── data/                   # 数据存储目录
-│   ├── images.json         # 图片数据文件
-│   └── <project_id>/       # 项目目录
-│       ├── metadata.json   # 项目元数据文件
-│       └── <note_id>.md    # 笔记文件
-└── README.md               # 项目说明文件
+├── static/                           # 静态文件目录
+│   └── uploads/                      # 图片上传目录
+├── data/                             # 数据存储目录
+│   ├── images.json                   # 图片数据文件
+│   └── <project_id>/                 # 项目目录
+│       ├── metadata.json             # 项目元数据文件
+│       └── <note_id>.md              # 笔记文件
+├── README.md                         # 项目说明文件
+├── LICENSE                           # 许可证文件
+└── Markdown Note System Document.zip # 文档(请导入系统查看)
 ```
 
 ## 贡献指南
@@ -106,3 +108,12 @@ markdown-note-system/
 ## 联系方式
 
 如有任何问题或建议，请联系 [lzhbhlrpython](https://pyliubaolin.top/)。
+
+
+## 待完成
+1. 添加更多功能，如搜索、标签、分类等。
+2. GUI 界面，使用PyQT5等。
+3. 夜间模式。
+
+## 贡献列表
+1. [lzhbhlrPython](https://github.com/lzhbhlrPython)
