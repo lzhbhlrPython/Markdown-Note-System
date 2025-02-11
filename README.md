@@ -112,8 +112,7 @@ markdown-note-system/
 
 ## 待完成
 1. 添加更多功能，如搜索、标签、分类等。
-2. GUI 界面，使用PyQT5等。
-3. 夜间模式。
+2. 夜间模式。
 
 ## 贡献列表
 1. [lzhbhlrPython](https://github.com/lzhbhlrPython)
