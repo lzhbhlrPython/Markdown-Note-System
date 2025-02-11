@@ -1,0 +1,132 @@
+# macOS
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# dotenv environment variables file
+.env
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.class
+*.jar
+*.war
+*.ear
+*.class
+*.jar
+*.war
+*.ear
+
+# Ruby
+*.gem
+*.rbc
+.bundle
+.config
+coverage/
+InstalledFiles
+pkg/
+spec/reports/
+test/tmp/
+test/version_tmp/
+tmp/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Rust
+*.rs.bk
+
+# Haskell
+*.hi
+*.o
+*.hs.bk
+*.prof
+*.aux
+*.hp
+*.eventlog
+*.tix
+*.dyn_hi
+*.dyn_o
+
+# Swift
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserdata/
+*.xcuserstate/
+*.xcscheme/
+*.xccheckout/
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserdata/
+*.xcuserstate/
+*.xcscheme/
+*.xccheckout/
+*.xcodeproj/
+*.xcworkspace/
+*.xcuserdata/
+*.xcuserstate/
+*.xcscheme/
+*.xccheckout/
+
+# NOTE
+static/
+data/

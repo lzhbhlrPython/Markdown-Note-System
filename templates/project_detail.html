@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mt-4">
+  <a href="{{ url_for('index') }}" class="btn btn-link">&larr; 返回项目列表</a>
+  <h1 class="display-4">{{ project.name }}</h1>
+  <p class="small">项目ID：{{ project.id }}</p>
+  <!-- 新增：下载项目压缩包按钮 -->
+  <div class="mb-3">
+    <button id="downloadZipBtn" class="btn btn-secondary">下载项目</button>
+    <!-- 新增：导入markdown格式笔记按钮 -->
+    <button id="importMarkdownBtn" class="btn btn-secondary">导入笔记</button>
+    <!-- 隐藏的文件输入控件 -->
+    <input type="file" id="markdownFileInput" accept=".md" style="display: none;">
+  </div>
+  <div class="mb-4">
+    <form id="newNoteForm" class="row g-2">
+      <div class="col">
+          <input type="text" name="title" placeholder="新笔记标题" class="form-control">
+      </div>
+      <div class="col-auto">
+          <button type="submit" class="btn btn-primary">创建笔记</button>
+      </div>
+    </form>
+  </div>
+  <div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for note in project.notes %}
+    <div class="col">
+      <div class="card">
+        <a href="{{ url_for('note_edit', project_id=project.id, note_id=note.id) }}" class="text-decoration-none text-dark">
+          <div class="card-body">
+            <h5 class="card-title">{{ note.title }}</h5>
+            <p class="card-text small">最后更新于 {{ note.updated_at|datetimeformat }}</p>
+            <p class="card-text small">笔记ID：{{ note.id }}</p>
+          </div>
+        </a>
+        <div class="card-footer d-flex justify-content-between">
+          <button class="btn btn-sm btn-danger" onclick="deleteNote('{{ project.id }}','{{ note.id }}', event)">删除</button>
+          <button class="btn btn-sm btn-secondary" onclick="moveNotePrompt('{{ project.id }}','{{ note.id }}', event)">移动</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- 引入 SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  async function deleteNote(projectId, noteId, event) {
+    try {
+      const result = await Swal.fire({
+        title: '确定删除此笔记吗？',
+        text: '删除后无法恢复。',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+      });
+      if(result.isConfirmed) {
+        const response = await fetch(`/api/projects/${projectId}/notes/${noteId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+          await Swal.fire({
+            text: '笔记已删除',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          window.location.reload();
+        }
+      }
+    } catch(e) {
+      console.log("删除操作已取消", e);
+    }
+  }
+  
+  async function moveNotePrompt(projectId, noteId, event) {
+    try {
+      const { value: targetProjectId } = await Swal.fire({
+        title: '移动笔记',
+        text: '请输入目标项目ID：',
+        input: 'text',
+        inputPlaceholder: '目标项目ID',
+        showCancelButton: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      });
+      if (!targetProjectId) return;
+      const response = await fetch(`/api/projects/${projectId}/notes/${noteId}/move`, {
+          method: 'PUT',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target_project_id: targetProjectId })
+      });
+      if (response.ok) {
+        await Swal.fire({
+          text: '笔记移动成功',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        window.location.reload();
+      } else {
+        await Swal.fire({
+          title: '移动失败',
+          text: '请检查目标项目ID是否正确。',
+          icon: 'error'
+        });
+      }
+    } catch(e) {
+      console.log("移动操作已取消", e);
+    }
+  }
+  
+  document.getElementById('newNoteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const response = await fetch('/api/projects/{{ project.id }}/notes', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({title: formData.get('title')})
+    });
+    if (response.ok) {
+      window.location.reload();
+    }
+  });
+
+  // 下载项目压缩包交互
+  document.getElementById('downloadZipBtn').addEventListener('click', async () => {
+    const result = await Swal.fire({
+      title: '下载项目压缩包',
+      text: '是否确认下载当前项目的压缩包？',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '下载',
+      cancelButtonText: '取消'
+    });
+    if(result.isConfirmed) {
+      window.location.href = `/api/projects/{{ project.id }}/download_zip`;
+    }
+  });
+  
+  // 导入 markdown 格式笔记交互：点击按钮触发文件选择，然后读取文件内容并导入
+  document.getElementById('importMarkdownBtn').addEventListener('click', () => {
+    document.getElementById('markdownFileInput').click();
+  });
+  
+  document.getElementById('markdownFileInput').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      const content = event.target.result;
+      // 使用文件名（去掉 .md 后缀）作为笔记标题
+      const title = file.name.replace(/\.md$/i, '');
+      // 先创建笔记（初始内容会被创建）
+      const createResponse = await fetch(`/api/projects/{{ project.id }}/notes`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ title: title })
+      });
+      if (createResponse.ok) {
+        const note = await createResponse.json();
+        // 更新笔记内容为导入的 Markdown 文本
+        const updateResponse = await fetch(`/api/projects/{{ project.id }}/notes/${note.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ title: note.title, content: content })
+        });
+        if (updateResponse.ok) {
+          await Swal.fire({
+            text: '导入成功',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          window.location.reload();
+        } else {
+          await Swal.fire({
+            text: '导入失败',
+            icon: 'error'
+          });
+        }
+      } else {
+        await Swal.fire({
+          text: '创建笔记失败',
+          icon: 'error'
+        });
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // 集成 MathJax 实现 LaTeX 渲染
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+{% endblock %}

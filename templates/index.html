@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mt-4">
+  <h1 class="display-4 text-primary">我的项目</h1>
+  <div class="mb-4">
+    <form id="newProjectForm" class="row g-2">
+      <div class="col">
+          <input type="text" name="name" placeholder="新项目名称" class="form-control">
+      </div>
+      <div class="col-auto">
+          <button type="submit" class="btn btn-primary">创建项目</button>
+      </div>
+    </form>
+  </div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for project in projects %}
+      <div class="col">
+          <div class="card">
+            <a href="{{ url_for('project_detail', project_id=project.id) }}" class="text-decoration-none text-dark">
+              <div class="card-body">
+                  <h5 class="card-title">{{ project.name }}</h5>
+                  <p class="card-text small">创建于 {{ project.created_at|datetimeformat }}</p>
+                  <p class="card-text small">ID: {{ project.id }}</p>
+              </div>
+            </a>
+            <div class="card-footer">
+              <button class="btn btn-sm btn-danger" onclick="deleteProject('{{ project.id }}', event)">删除</button>
+            </div>
+          </div>
+      </div>
+      {% endfor %}
+  </div>
+  <!-- 新增：导入项目压缩包表单 -->
+  <div class="mt-5">
+    <h2>导入项目压缩包</h2>
+    <p class="text-muted">请选择一个压缩包文件，包含项目数据。</p>
+    <p class="text-danger">1.请确保您的压缩包是直接导出，无篡改。2.请重新上传图片附件并手动替换链接。</p>
+    <form id="importProjectForm">
+      <div class="mb-3">
+        <input type="file" id="importFile" accept=".zip" class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">导入项目</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- 引入 SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  async function deleteProject(projectId, event) {
+    try {
+      const result = await Swal.fire({
+        text: '确定删除此项目吗？删除后无法恢复。',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      });
+      if (!result.isConfirmed) {
+        throw new Error('cancelled');
+      }
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        await Swal.fire({
+          text: '项目已删除。',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        window.location.reload();
+      }
+    } catch (e) {
+      console.log('删除操作已取消', e);
+    }
+  }
+
+  document.getElementById('newProjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: formData.get('name')})
+    });
+    if (response.ok) {
+      window.location.reload();
+    }
+  });
+
+  // 处理导入项目压缩包表单提交
+  document.getElementById('importProjectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('importFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      Swal.fire({text: '请选择压缩包文件', icon: 'error'});
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const response = await fetch('/api/projects/import', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Swal.fire({
+          text: '项目导入成功',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => window.location.reload());
+      } else {
+        Swal.fire({
+          text: '导入失败：' + (data.error || '未知错误'),
+          icon: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('导入失败', error);
+      Swal.fire({
+        text: '导入失败：' + error.message,
+        icon: 'error'
+      });
+    }
+  });
+</script>
+{% endblock %}

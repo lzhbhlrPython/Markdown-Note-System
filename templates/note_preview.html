@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mt-4">
+  <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-link">← 返回项目</a>
+  <h1 class="display-6">{{ note.title }}</h1>
+  <p class="small text-muted">笔记ID：{{ note.id }}</p>
+  <div class="card" id="noteCard">
+      <div class="card-body">
+          {{ content|safe }}
+      </div>
+  </div>
+  <div class="mt-4">
+    <a href="{{ url_for('download_note', project_id=project.id, note_id=note.id) }}" class="btn btn-primary">保存到本地</a>
+    <button class="btn btn-primary" onclick="saveAsImage()">保存为图片</button>
+    <button class="btn btn-primary" onclick="saveAsPDF()">保存为PDF</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- 引入 MathJax 实现 LaTeX 渲染 -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+    svg: { fontCache: 'global' }
+  };
+  // 渲染数学公式
+  function renderMath() {
+      MathJax.typesetPromise();
+  }
+  // 保存为图片
+  function saveAsImage() {
+    const element = document.getElementById("noteCard");
+    html2canvas(element, { scale: 2 }).then(canvas => {
+      const imageURL = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = imageURL;
+      link.download = "{{ note.title }}.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }).catch(e => {
+      console.error("保存为图片失败：", e);
+      Swal.fire({
+        text: '保存为图片失败',
+        icon: 'error'
+      });
+    });
+  }
+  // 保存为PDF
+  function saveAsPDF() {
+    const element = document.getElementById("noteCard");
+    var opt = {
+      margin:       0.5,
+      filename:     "{{ note.title }}.pdf",
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save().catch(e => {
+      console.error("保存为PDF失败：", e);
+      Swal.fire({
+        text: '保存为PDF失败',
+        icon: 'error'
+      });
+    });
+  }
+</script>
+<!-- 引入 MathJax、html2canvas 和 html2pdf 脚本 -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}图库{% endblock %}
+{% block content %}
+<h2 class="mt-4 mb-3">图片图库</h2>
+<form id="uploadImageForm" class="mb-4" enctype="multipart/form-data">
+  <div class="mb-3">
+    <input type="file" name="image" accept="image/*" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">上传图片</button>
+</form>
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+  {% for img in images %}
+  <div class="col">
+    <div class="card h-100">
+      <a href="{{ img.url }}" data-fancybox="gallery" data-caption="{{ img.filename }}">
+        <img src="{{ img.url }}" alt="{{ img.filename }}" class="card-img-top" style="object-fit: cover; height: 200px;">
+      </a>
+      <div class="card-body p-2">
+        <input type="text" class="form-control form-control-sm" value="{{ img.url }}" readonly onclick="this.select()">
+      </div>
+      <div class="card-footer text-end">
+        <button class="btn btn-sm btn-secondary me-2" onclick="copyLink('{{ img.url }}')">复制链接</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteImage('{{ img.id }}')">删除</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<!-- 引入 Fancybox 样式和脚本 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4/dist/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4/dist/fancybox.umd.js"></script>
+<!-- 引入 SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // 显示 SweetAlert2 提示（toast）
+  function showSwalMsg(message, icon = 'success') {
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: icon,
+      title: message,
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+
+  // 上传图片操作，使用 FormData 上传图片文件
+  document.getElementById('uploadImageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const fileInput = this.querySelector('input[name="image"]');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      Swal.fire({
+        text: '请选择要上传的图片',
+        icon: 'error'
+      });
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    try {
+      const response = await fetch('/api/upload_image', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (response.ok) {
+        Swal.fire({
+          text: '图片上传成功',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton:false
+        }).then(() => window.location.reload());
+      } else {
+        Swal.fire({
+          text: '图片上传失败：' + (data.error || '未知错误'),
+          icon: 'error'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        text: '图片上传异常',
+        icon: 'error'
+      });
+    }
+  });
+
+  // 删除图片操作
+  function deleteImage(imageId) {
+    if (!confirm("确定要删除该图片吗？")) return;
+    fetch(`/api/images/${imageId}`, { method: "DELETE" })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          showSwalMsg("图片已删除", 'success');
+          setTimeout(function(){
+            window.location.reload();
+          }, 1500);
+        } else {
+          showSwalMsg("删除失败：" + (data.error || "未知错误"), 'error');
+        }
+      })
+      .catch(err => {
+        showSwalMsg("删除失败", 'error');
+        console.error(err);
+      });
+  }
+
+  // 复制链接操作
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(function() {
+      showSwalMsg("链接已复制", 'success');
+    }).catch(function(err) {
+      console.error(err);
+      showSwalMsg("复制失败", 'error');
+    });
+  }
+</script>
+{% endblock %}

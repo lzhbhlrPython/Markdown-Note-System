@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Markdown Notes{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入 MathJax，用于 LaTeX 渲染 -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}">我的笔记</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('gallery') }}">图库</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="container my-4">
+    {% block content %}{% endblock %}
+  </div>
+  
+  <!-- 添加浮动帮助按钮 -->
+  <button id="helpBtn" class="btn btn-info position-fixed" style="bottom:20px; right:20px; z-index:1050;">
+    帮助
+  </button>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.getElementById('helpBtn').addEventListener('click', function(){
+      Swal.fire({
+        title: '帮助信息',
+        html: '欢迎使用 Markdown Notes 系统。<br><br>您可以创建和删除项目、编辑笔记、上传图片，以及下载项目压缩包。<br/><br/>如有疑问，请查看系统文档或联系<a href="https://pyliubaolin.top/">开发者</a>。',
+        icon: 'info',
+        confirmButtonText: '关闭'
+      });
+    });
+  </script>
+</body>
+</html>

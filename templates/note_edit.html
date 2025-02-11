@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}编辑笔记{% endblock %}
+{% block content %}
+<div class="mt-4">
+  <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-link">← 返回项目</a>
+  <div class="card">
+    <div class="card-body">
+      <input type="text" id="noteTitle" value="{{ note.title }}" class="form-control form-control-lg mb-3">
+      <div class="mb-3 d-flex gap-2">
+        <button id="saveNote" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('note_preview', project_id=project.id, note_id=note.id) }}" class="btn btn-success">预览</a>
+      </div>
+      <textarea id="editor">{{ note.content }}</textarea>
+      <div id="wordCount" class="mt-2 small text-muted">字符数：0</div>
+      <div id="lastBackupTime" class="mt-2 small text-muted">上次自动备份时间：无</div>
+      <p class="mt-2 small text-muted">笔记ID：{{ note.id }}</p>
+      <p class="mt-2 small text-muted">上次保存哈希：{{ note.hash }}</p>
+      <button id="verifyHash" class="btn btn-danger btn-sm mt-2">检测是否篡改</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  /* 额外自定义样式 */
+</style>
+<script>
+  var simplemde = new SimpleMDE({
+    element: document.getElementById("editor"),
+    spellChecker: false,
+    autosave: { enabled: false }
+  });
+
+  // 上传图片函数
+  function uploadImage(file) {
+    var formData = new FormData();
+    formData.append("file", file);
+    return fetch("/api/upload_image", { method: "POST", body: formData })
+      .then(response => response.json());
+  }
+
+  // 处理拖拽上传
+  simplemde.codemirror.getWrapperElement().addEventListener("drop", function(event) {
+    event.preventDefault();
+    var files = event.dataTransfer.files;
+    if (files.length > 0) {
+      uploadImage(files[0]).then(data => {
+        if (data.md) {
+          var cm = simplemde.codemirror;
+          var pos = cm.getCursor();
+          cm.replaceRange(data.md, pos);
+        }
+      });
+    }
+  });
+
+  // 处理粘贴上传
+  simplemde.codemirror.on("paste", function(cm, event) {
+    var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    for (var index in items) {
+      var item = items[index];
+      if (item.kind === "file") {
+        var file = item.getAsFile();
+        uploadImage(file).then(data => {
+          if (data.md) {
+            var pos = cm.getCursor();
+            cm.replaceRange(data.md, pos);
+          }
+        });
+      }
+    }
+  });
+
+  // 字符统计
+  function updateWordCount() {
+    var text = simplemde.value();
+    var count = text.length;
+    document.getElementById("wordCount").innerText = "字符数：" + count;
+  }
+  simplemde.codemirror.on("change", updateWordCount);
+
+  // 使用 SweetAlert2 显示提示消息
+  function showSwalMsg(message, icon = 'success') {
+    Swal.fire({
+      text: message,
+      icon: icon,
+      timer: 2000,
+      showConfirmButton: false
+    });
+  }
+
+  // 保存笔记
+  document.getElementById("saveNote").addEventListener("click", async function() {
+    const title = document.getElementById("noteTitle").value;
+    const content = simplemde.value();
+    const response = await fetch("/api/projects/{{ project.id }}/notes/{{ note.id }}", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title, content: content })
+    });
+    if (response.ok) {
+      showSwalMsg("保存成功");
+      backupContent = content;
+      setTimeout(() => {
+        window.location.href = "{{ url_for('project_detail', project_id=project.id) }}";
+      }, 2000);
+    }
+  });
+
+  // 检测哈希并覆盖被篡改内容
+  document.getElementById("verifyHash").addEventListener("click", async function() {
+    const response = await fetch("/api/projects/{{ project.id }}/notes/{{ note.id }}/verify");
+    if (response.ok) {
+      const result = await response.json();
+      if (result.valid) {
+        showSwalMsg("笔记未被篡改");
+      } else {
+        const title = document.getElementById("noteTitle").value;
+        const content = simplemde.value();
+        const updateResponse = await fetch("/api/projects/{{ project.id }}/notes/{{ note.id }}", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: title, content: content })
+        });
+        if (updateResponse.ok) {
+          showSwalMsg("笔记内容已篡改，现已覆盖保存");
+        } else {
+          showSwalMsg("保存覆盖失败", "error");
+        }
+      }
+    } else {
+      showSwalMsg("检测失败", "error");
+    }
+  });
+
+  // 基于 localStorage 的自动备份功能
+  const backupKey = "note_backup_{{ note.id }}";
+  // 页面加载时检查备份内容
+  window.addEventListener("load", function() {
+    const backupContent = localStorage.getItem(backupKey);
+    const currentContent = simplemde.value();
+    if (backupContent && backupContent !== currentContent) {
+      Swal.fire({
+        title: '检测到备份',
+        text: '是否恢复备份的笔记内容？',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '恢复备份',
+        cancelButtonText: '放弃'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          simplemde.value(backupContent);
+          showSwalMsg("已恢复备份内容");
+        }
+      });
+    }
+  });
+  // 每隔 10 秒自动备份内容到 localStorage，并更新上次备份时间
+  setInterval(() => {
+    const content = simplemde.value();
+    localStorage.setItem(backupKey, content);
+    const backupTime = new Date().toLocaleString();
+    document.getElementById("lastBackupTime").innerText = "上次自动备份时间：" + backupTime;
+  }, 30000);
+</script>
+{% endblock %}
