@@ -130,3 +130,4 @@ tmp/
 # NOTE
 static/uploads/
 data/
+test.py

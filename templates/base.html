@@ -31,10 +31,19 @@
     帮助
   </button>
   
+  <!-- 添加加载Typora主题按钮 -->
+  <button id="loadTyporaThemeBtn" class="btn btn-secondary position-fixed" style="bottom:20px; left:20px; z-index:1050;">
+    加载主题
+  </button>
+  
+  <!-- 隐藏的本地文件选择控件 -->
+  <input type="file" id="localThemeInput" accept=".css" style="display: none;">
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   {% block scripts %}{% endblock %}
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.16.0/dist/sweetalert2.all.min.js"></script>
   <script>
+    // 帮助按钮事件
     document.getElementById('helpBtn').addEventListener('click', function(){
       Swal.fire({
         title: '帮助信息',
@@ -44,6 +53,53 @@
         showCloseButton: true
       });
     });
+    
+    // 加载Typora主题按钮事件，打开本地文件选择
+    document.getElementById('loadTyporaThemeBtn').addEventListener('click', function(){
+      document.getElementById('localThemeInput').click();
+    });
+    
+    // 本地主题文件选择后处理
+    document.getElementById('localThemeInput').addEventListener('change', function(event){
+      var file = event.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var css = e.target.result;
+          localStorage.setItem('typoraTheme', css);
+          applyTyporaTheme(css,'change');
+        };
+        reader.readAsText(file);
+      }
+    });
+    
+    // 将主题样式注入到页面中
+    function applyTyporaTheme(css,type) {
+      let styleTag = document.getElementById('typoraThemeStyle');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.setAttribute('id', 'typoraThemeStyle');
+        document.head.appendChild(styleTag);
+      }
+      styleTag.innerHTML = css;
+      if (type === 'load') {
+        return;
+      }
+      else if (type === 'change') {
+        Swal.fire({
+          text: '主题样式已应用',
+          icon: 'success'
+        });
+      }
+    }
+
+    onload = () => {
+      // 从本地存储中获取Typora主题样式
+      const typoraTheme = localStorage.getItem('typoraTheme');
+      if (typoraTheme) {
+        applyTyporaTheme(typoraTheme,'load');
+      }
+    };
   </script>
 </body>
 </html>
