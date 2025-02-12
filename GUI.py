@@ -57,8 +57,8 @@ class MainWindow(QMainWindow):
         self.browser.page().runJavaScript(js_code)
 
 if __name__ == '__main__':
-    if not os.path.exists(app.app.config["UPLOAD_FOLDER"]):
-        os.makedirs(app.app.config["UPLOAD_FOLDER"])
+    if not os.path.exists(app.app.config["DATA_DIR"]):
+        os.makedirs(app.app.config["DATA_DIR"])
     # 后台线程启动 Flask 服务
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
